@@ -4,12 +4,97 @@ import { cn } from '@/lib/utils';
 import SearchableSelect from '@/components/shared/SearchableSelect';
 import { useMasterDataStore } from '@/store/masterDataStore';
 
+// Helper untuk memformat data awal tangkapan
+const getInitialTangkapan = (data) => {
+  if (!data) {
+    return [{ komoditas: '', bentuk_ikan: 'Segar', volume: '', harga: '', pud_tangkapan_sampel: '' }];
+  }
+  let list = data.tangkapan;
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      list = null;
+    }
+  }
+  if (Array.isArray(list) && list.length > 0) {
+    return list.map(item => ({
+      komoditas: item.komoditas || '',
+      bentuk_ikan: item.bentuk_ikan || 'Segar',
+      volume: item.volume !== undefined && item.volume !== null ? item.volume : '',
+      harga: item.harga !== undefined && item.harga !== null ? item.harga : '',
+      pud_tangkapan_sampel: item.pud_tangkapan_sampel !== undefined && item.pud_tangkapan_sampel !== null 
+        ? item.pud_tangkapan_sampel 
+        : (item.volume !== undefined && item.volume !== null ? item.volume : '')
+    }));
+  }
+  if (data.komoditas) {
+    return [{
+      komoditas: data.komoditas || '',
+      bentuk_ikan: data.bentuk_ikan || 'Segar',
+      volume: data.volume !== undefined && data.volume !== null ? data.volume : '',
+      harga: data.harga !== undefined && data.harga !== null ? data.harga : '',
+      pud_tangkapan_sampel: data.pud_tangkapan_sampel !== undefined && data.pud_tangkapan_sampel !== null ? data.pud_tangkapan_sampel : ''
+    }];
+  }
+  return [{ komoditas: '', bentuk_ikan: 'Segar', volume: '', harga: '', pud_tangkapan_sampel: '' }];
+};
+
+// Helper untuk inisialisasi state form data
+const getInitialFormData = (data) => {
+  if (!data) {
+    return {
+      tanggal: '',
+      jam_labuh: '',
+      jam_bongkar: '',
+      nama_kapal: '',
+      pelabuhan: '',
+      kabupaten_kota: '',
+      wpp: '',
+      jenis_perairan: '',
+      pud_populasi_alat: '',
+      pud_jumlah_sampel: '',
+      logistik: [{ nama: '', jumlah: '' }],
+      kapal_pengangkut: '',
+      gt_kapal: '',
+      alat_tangkap: '',
+      tangkapan: [{ komoditas: '', bentuk_ikan: 'Segar', volume: '', harga: '', pud_tangkapan_sampel: '' }]
+    };
+  }
+
+  return {
+    tanggal: data.tanggal ? (typeof data.tanggal === 'string' ? data.tanggal.split('T')[0] : new Date(data.tanggal).toISOString().split('T')[0]) : '',
+    jam_labuh: data.jam_labuh || '',
+    jam_bongkar: data.jam_bongkar || '',
+    nama_kapal: data.nama_kapal || '',
+    pelabuhan: data.pelabuhan || '',
+    kabupaten_kota: data.kabupaten_kota || '',
+    wpp: data.wpp || '',
+    jenis_perairan: data.jenis_perairan || '',
+    pud_populasi_alat: data.pud_populasi_alat !== undefined && data.pud_populasi_alat !== null ? data.pud_populasi_alat : '',
+    pud_jumlah_sampel: data.pud_jumlah_sampel !== undefined && data.pud_jumlah_sampel !== null ? data.pud_jumlah_sampel : '',
+    logistik: (() => {
+      if (!data.logistik) return [{ nama: '', jumlah: '' }];
+      try {
+        const parsed = typeof data.logistik === 'string' ? JSON.parse(data.logistik) : data.logistik;
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ nama: '', jumlah: '' }];
+      } catch (e) {
+        return [{ nama: '', jumlah: '', legacy: data.logistik }];
+      }
+    })(),
+    kapal_pengangkut: data.kapal_pengangkut || '',
+    gt_kapal: data.gt_kapal || '',
+    alat_tangkap: data.alat_tangkap || '',
+    tangkapan: getInitialTangkapan(data)
+  };
+};
+
 // Fungsi komponen/logika PerikananTangkapForm
 export function PerikananTangkapForm({ initialData = null, onSubmit, onCancel, isLoading }) {
   const getOptions = useMasterDataStore((state) => state.getOptions);
   
   // State untuk menyimpan jenis sumber perairan (Pelabuhan/PUD/Non Pelabuhan)
-  const [sumberData, setSumberData] = useState(null); // null, 'PELABUHAN', 'PUD', 'KAB_KOTA'
+  const [sumberData, setSumberData] = useState(() => initialData?.sumber_data || null);
   
   const isPelabuhan = sumberData === 'PELABUHAN';
   const isPUD = sumberData === 'PUD';
@@ -30,82 +115,32 @@ export function PerikananTangkapForm({ initialData = null, onSubmit, onCancel, i
   const JENIS_PERAHU_PUD = getOptions('JENIS_PERAHU_PUD');
   
   // State untuk menyimpan seluruh nilai input dari form
-  const [formData, setFormData] = useState({
-    tanggal: '',
-    jam_labuh: '',
-    jam_bongkar: '',
-    nama_kapal: '',
-    pelabuhan: '',
-    kabupaten_kota: '',
-    wpp: '',
-    jenis_perairan: '',
-    pud_populasi_alat: '',
-    pud_jumlah_sampel: '',
-    logistik: [{ nama: '', jumlah: '' }],
-    kapal_pengangkut: '',
-    gt_kapal: '',
-    alat_tangkap: '',
-    tangkapan: [
-      { komoditas: '', bentuk_ikan: 'Segar', volume: '', harga: '', pud_tangkapan_sampel: '' }
-    ]
-  });
+  const [formData, setFormData] = useState(() => getInitialFormData(initialData));
 
   // State untuk menyimpan data/nilai errors
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (initialData) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSumberData(initialData.sumber_data || 'PELABUHAN');
-      setFormData({
-        tanggal: initialData.tanggal ? initialData.tanggal.split('T')[0] : '',
-        jam_labuh: initialData.jam_labuh || '',
-        jam_bongkar: initialData.jam_bongkar || '',
-        nama_kapal: initialData.nama_kapal || '',
-        pelabuhan: initialData.pelabuhan || '',
-        kabupaten_kota: initialData.kabupaten_kota || '',
-        wpp: initialData.wpp || '',
-        jenis_perairan: initialData.jenis_perairan || '',
-        pud_populasi_alat: initialData.pud_populasi_alat || '',
-        pud_jumlah_sampel: initialData.pud_jumlah_sampel || '',
-        logistik: (() => {
-          if (!initialData.logistik) return [{ nama: '', jumlah: '' }];
-          try {
-            const parsed = JSON.parse(initialData.logistik);
-            return Array.isArray(parsed) && parsed.length > 0 ? parsed : [{ nama: '', jumlah: '' }];
-          // eslint-disable-next-line no-unused-vars
-          } catch (e) {
-            // legacy string fallback
-            return [{ nama: '', jumlah: '', legacy: initialData.logistik }];
-          }
-        })(),
-        kapal_pengangkut: initialData.kapal_pengangkut || '',
-        gt_kapal: initialData.gt_kapal || '',
-        alat_tangkap: initialData.alat_tangkap || '',
-        tangkapan: [
-          { 
-            komoditas: initialData.komoditas || '', 
-            volume: initialData.volume || '', 
-            harga: initialData.harga || '',
-            pud_tangkapan_sampel: initialData.pud_tangkapan_sampel || '' 
-          }
-        ]
-      });
-    } else {
-      // Set default values after options are loaded if creating new
-      if(sumberData && !formData.pelabuhan && PELABUHAN_OPTIONS.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          pelabuhan: PELABUHAN_OPTIONS[0] || '',
-          kabupaten_kota: KAB_KOTA_OPTIONS[0] || '',
-          wpp: WPP_OPTIONS[0] || '',
-          jenis_perairan: PERAIRAN_OPTIONS[0] || '',
-          gt_kapal: sumberData === 'PUD' ? (JENIS_PERAHU_PUD[0] || '') : (GT_KAPAL_LAUT[0] || ''),
-          alat_tangkap: sumberData === 'PUD' ? (ALAT_TANGKAP_PUD[0] || '') : (ALAT_TANGKAP_LAUT[0] || ''),
-          logistik: [{ nama: PERBEKALAN_OPTIONS[0]?.nama || PERBEKALAN_OPTIONS[0] || '', jumlah: '' }],
-          tangkapan: [{ komoditas: sumberData === 'PUD' ? (KOMODITAS_PUD_OPTIONS[0] || '') : (KOMODITAS_LAUT_OPTIONS[0] || ''), bentuk_ikan: 'Segar', volume: '', harga: '', pud_tangkapan_sampel: '' }]
-        }));
-      }
+      setFormData(getInitialFormData(initialData));
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    // Set default values after options are loaded if creating new
+    if (!initialData && sumberData && !formData.pelabuhan && PELABUHAN_OPTIONS.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        pelabuhan: PELABUHAN_OPTIONS[0] || '',
+        kabupaten_kota: KAB_KOTA_OPTIONS[0] || '',
+        wpp: WPP_OPTIONS[0] || '',
+        jenis_perairan: PERAIRAN_OPTIONS[0] || '',
+        gt_kapal: sumberData === 'PUD' ? (JENIS_PERAHU_PUD[0] || '') : (GT_KAPAL_LAUT[0] || ''),
+        alat_tangkap: sumberData === 'PUD' ? (ALAT_TANGKAP_PUD[0] || '') : (ALAT_TANGKAP_LAUT[0] || ''),
+        logistik: [{ nama: PERBEKALAN_OPTIONS[0]?.nama || PERBEKALAN_OPTIONS[0] || '', jumlah: '' }],
+        tangkapan: [{ komoditas: sumberData === 'PUD' ? (KOMODITAS_PUD_OPTIONS[0] || '') : (KOMODITAS_LAUT_OPTIONS[0] || ''), bentuk_ikan: 'Segar', volume: '', harga: '', pud_tangkapan_sampel: '' }]
+      }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -156,7 +191,7 @@ export function PerikananTangkapForm({ initialData = null, onSubmit, onCancel, i
 
   // Fungsi untuk menambah baris input jenis ikan/komoditas baru pada form
   const addTangkapan = () => {
-    const isPUD = formData.sumber_data === 'PUD';
+    const isPUD = sumberData === 'PUD';
     const defaultKom = isPUD ? KOMODITAS_PUD_OPTIONS[0] : KOMODITAS_LAUT_OPTIONS[0];
     setFormData(prev => ({
       ...prev,
