@@ -29,6 +29,47 @@ import PromptModal from '@/components/shared/PromptModal';
 import { usePromptModal } from '@/hooks/usePromptModal';
 
 echarts.registerMap('jawa_timur', geoJsonData);
+
+const KABUPATEN_GEO_MAP = {
+  "KAB. PACITAN": "Pacitan",
+  "KAB. PONOROGO": "Ponorogo",
+  "KAB. TRENGGALEK": "Trenggalek",
+  "KAB. TULUNGAGUNG": "Tulungagung",
+  "KAB. BLITAR": "Blitar",
+  "KAB. KEDIRI": "Kediri",
+  "KAB. MALANG": "Malang",
+  "KAB. LUMAJANG": "Lumajang",
+  "KAB. JEMBER": "Jember",
+  "KAB. BANYUWANGI": "Banyuwangi",
+  "KAB. BONDOWOSO": "Bondowoso",
+  "KAB. SITUBONDO": "Situbondo",
+  "KAB. PROBOLINGGO": "Probolinggo",
+  "KAB. PASURUAN": "Pasuruan",
+  "KAB. SIDOARJO": "Sidoarjo",
+  "KAB. MOJOKERTO": "Mojokerto",
+  "KAB. JOMBANG": "Jombang",
+  "KAB. NGANJUK": "Nganjuk",
+  "KAB. MADIUN": "Madiun",
+  "KAB. MAGETAN": "Magetan",
+  "KAB. NGAWI": "Ngawi",
+  "KAB. BOJONEGORO": "Bojonegoro",
+  "KAB. TUBAN": "Tuban",
+  "KAB. LAMONGAN": "Lamongan",
+  "KAB. GRESIK": "Gresik",
+  "KAB. BANGKALAN": "Bangkalan",
+  "KAB. SAMPANG": "Sampang",
+  "KAB. PAMEKASAN": "Pamekasan",
+  "KAB. SUMENEP": "Sumenep",
+  "KOTA KEDIRI": "Kota Kediri",
+  "KOTA BLITAR": "Kota Blitar",
+  "KOTA MALANG": "Kota Malang",
+  "KOTA PROBOLINGGO": "Kota Probolinggo",
+  "KOTA PASURUAN": "Kota Pasuruan",
+  "KOTA MOJOKERTO": "Kota Mojokerto",
+  "KOTA MADIUN": "Kota Madiun",
+  "KOTA SURABAYA": "Surabaya",
+  "KOTA BATU": "Batu"
+};
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
 // eslint-disable-next-line no-unused-vars
@@ -683,7 +724,7 @@ export default function AdminBudidaya() {
 
   const mapOption = useMemo(() => {
     const mapData = computedStats.produksiPerKabupaten.map(k => ({
-      name: k.name,
+      name: KABUPATEN_GEO_MAP[k.name] || k.name,
       value: k[visualisasiTipe] || 0
     }));
     const maxVal = Math.max(...mapData.map(d => d.value), 1);

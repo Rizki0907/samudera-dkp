@@ -13,6 +13,47 @@ import { useThemeStore } from '@/store/themeStore';
 // Register the East Java map
 echarts.registerMap('jawa_timur', geoJsonData);
 
+const KABUPATEN_GEO_MAP = {
+  "KAB. PACITAN": "Pacitan",
+  "KAB. PONOROGO": "Ponorogo",
+  "KAB. TRENGGALEK": "Trenggalek",
+  "KAB. TULUNGAGUNG": "Tulungagung",
+  "KAB. BLITAR": "Blitar",
+  "KAB. KEDIRI": "Kediri",
+  "KAB. MALANG": "Malang",
+  "KAB. LUMAJANG": "Lumajang",
+  "KAB. JEMBER": "Jember",
+  "KAB. BANYUWANGI": "Banyuwangi",
+  "KAB. BONDOWOSO": "Bondowoso",
+  "KAB. SITUBONDO": "Situbondo",
+  "KAB. PROBOLINGGO": "Probolinggo",
+  "KAB. PASURUAN": "Pasuruan",
+  "KAB. SIDOARJO": "Sidoarjo",
+  "KAB. MOJOKERTO": "Mojokerto",
+  "KAB. JOMBANG": "Jombang",
+  "KAB. NGANJUK": "Nganjuk",
+  "KAB. MADIUN": "Madiun",
+  "KAB. MAGETAN": "Magetan",
+  "KAB. NGAWI": "Ngawi",
+  "KAB. BOJONEGORO": "Bojonegoro",
+  "KAB. TUBAN": "Tuban",
+  "KAB. LAMONGAN": "Lamongan",
+  "KAB. GRESIK": "Gresik",
+  "KAB. BANGKALAN": "Bangkalan",
+  "KAB. SAMPANG": "Sampang",
+  "KAB. PAMEKASAN": "Pamekasan",
+  "KAB. SUMENEP": "Sumenep",
+  "KOTA KEDIRI": "Kota Kediri",
+  "KOTA BLITAR": "Kota Blitar",
+  "KOTA MALANG": "Kota Malang",
+  "KOTA PROBOLINGGO": "Kota Probolinggo",
+  "KOTA PASURUAN": "Kota Pasuruan",
+  "KOTA MOJOKERTO": "Kota Mojokerto",
+  "KOTA MADIUN": "Kota Madiun",
+  "KOTA SURABAYA": "Surabaya",
+  "KOTA BATU": "Batu"
+};
+
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
 const currentYear = new Date().getFullYear();
@@ -283,8 +324,8 @@ export default function Budidaya() {
   // 1. Peta Choropleth Jawa Timur (Log Scale)
   const mapOption = useMemo(() => {
     const mapData = stats.produksiPerKabupaten.map(item => ({
-      name: item.name,
-      value: item.produksi
+      name: KABUPATEN_GEO_MAP[item.name] || item.name,
+      value: isProduksi ? item.produksi : item.nilai
     }));
 
     // Find max value to set visualMap (Sumenep dominates, so use log scale or piecewise)
